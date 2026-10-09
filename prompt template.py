@@ -1,113 +1,113 @@
-def build_prompt(technique, task):
 
-    if technique == "Zero-shot":
+"""Prompting techniques: Zero-shot, One-shot, Few-shot, CoT, ToT."""
+
+TECHNIQUES = {
+    "Zero-Shot": {
+        "icon": "🎯",
+        "desc": "No examples. Direct question only.",
+    },
+    "One-Shot": {
+        "icon": "1️⃣",
+        "desc": "One example is given before the task.",
+    },
+    "Few-Shot": {
+        "icon": "📚",
+        "desc": "Multiple examples guide the model.",
+    },
+    "Chain-of-Thought": {
+        "icon": "🧠",
+        "desc": "Breaks a problem into logical steps.",
+    },
+    "Tree-of-Thought": {
+        "icon": "🌳",
+        "desc": "Explores multiple possible approaches.",
+    },
+}
+
+
+def build_prompt(technique, task, examples=None):
+    """Build a prompt based on the selected prompting technique."""
+
+    examples = examples or []
+
+    if technique == "Zero-Shot":
         return f"""
-Answer the following task directly and accurately.
+Answer the following task clearly and accurately.
 
 Task:
 {task}
-""".strip()
+"""
 
-    elif technique == "One-shot":
+    elif technique == "One-Shot":
+        example = examples[0] if examples else {
+            "input": "What is AI?",
+            "output": "AI is the simulation of human intelligence by machines."
+        }
+
         return f"""
-Use the example below to understand the expected answer style.
+Learn from this example.
 
 Example:
-Task: Explain Python.
-Answer: Python is a high-level programming language used to
-build applications, automate tasks, and analyze data.
+Input: {example.get('input', '')}
+Output: {example.get('output', '')}
 
-Now answer this task:
-{task}
-""".strip()
-
-    elif technique == "Few-shot":
-        return f"""
-Study the examples and follow their answer pattern.
-
-Example 1:
-Task: What is AI?
-Answer: AI is technology that enables computers to perform
-tasks that normally require human intelligence.
-
-Example 2:
-Task: What is ML?
-Answer: Machine learning is a part of AI where systems learn
-patterns from data to make predictions or decisions.
-
-Example 3:
-Task: What is NLP?
-Answer: NLP enables computers to process and understand
-human language.
-
-Now answer this task:
-{task}
-""".strip()
-
-    elif technique == "CoT":
-        return f"""
-Solve the following task carefully.
-
-1. Understand the task.
-2. Identify the important information.
-3. Apply the appropriate method.
-4. Verify the result.
-5. Give a concise final answer.
-
-Provide only a short explanation of the key steps.
-Do not reveal private or hidden chain-of-thought.
+Now complete the following task.
 
 Task:
 {task}
-""".strip()
+"""
 
-    elif technique == "Manual CoT":
+    elif technique == "Few-Shot":
+        if not examples:
+            examples = [
+                {
+                    "input": "2 + 2",
+                    "output": "4"
+                },
+                {
+                    "input": "3 + 5",
+                    "output": "8"
+                }
+            ]
+
+        examples_text = "\n".join(
+            f"Input: {ex.get('input', '')}\n"
+            f"Output: {ex.get('output', '')}"
+            for ex in examples
+        )
+
         return f"""
-Use the following explicit reasoning structure.
+Follow the patterns shown in these examples.
 
-Step 1 - Understand the task:
-Identify what is being asked.
+{examples_text}
 
-Step 2 - Identify information:
-List the important facts, inputs, or constraints.
+Now complete this task:
+{task}
+"""
 
-Step 3 - Apply the method:
-Describe the main rule, calculation, or approach.
-
-Step 4 - Verify:
-Check whether the result is reasonable.
-
-Step 5 - Final answer:
-Give the final answer clearly.
+    elif technique == "Chain-of-Thought":
+        return f"""
+Analyze the task carefully.
+Work through the important logical steps internally,
+verify your conclusion, and provide a clear explanation
+with the final answer.
 
 Task:
 {task}
-""".strip()
+"""
 
-    elif technique == "ToT":
+    elif technique == "Tree-of-Thought":
         return f"""
-Solve the task by considering multiple possible approaches.
-
-Approach A:
-Suggest one possible solution and briefly evaluate it.
-
-Approach B:
-Suggest a second possible solution and briefly evaluate it.
-
-Approach C:
-Suggest a third possible solution when useful.
-
-Selection:
-Compare the approaches and select the most suitable one.
-
-Final answer:
-Provide the selected answer with a concise explanation.
-
-Do not reveal private or hidden chain-of-thought.
+Explore multiple possible approaches to solve the task.
+Compare their advantages and disadvantages.
+Choose the most suitable approach and provide the final answer
+with a concise explanation.
 
 Task:
 {task}
-""".strip()
+"""
 
     else:
-        raise ValueError("Unknown prompting technique")
+        raise ValueError(
+            f"Unknown prompting technique: {technique}"
+        )
